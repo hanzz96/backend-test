@@ -1,0 +1,16 @@
+#docker-compose file
+services:
+  backend-test:
+    container_name: backend-test
+    image: backend-test:0.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    working_dir: /backend-test
+    volumes:
+      - .:/backend-test
+      
