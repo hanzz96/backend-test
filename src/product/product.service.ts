@@ -78,6 +78,5 @@ export class ProductService {
             throw error;
         }
 
-        // return this.productModel.findByIdAndDelete(id);
     }
 }

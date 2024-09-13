@@ -43,9 +43,9 @@ export class ProductController {
     )
     @Roles(USER_ROLE.STAFF)
     @UseGuards(AuthGuard(), RolesGuard)
-    async updateProduct(@Param('id') id: string, @Body() product: UpdateProductDto): Promise<{ message: string, updated_product: Product }> {
+    async updateProduct(@Param('id') id: string, @Body() product: UpdateProductDto): Promise<{ message: string, updatedProduct: Product }> {
         const updated = await this.productService.updateById(id, product);
-        return { message: 'Product updated successfully', updated_product: updated };
+        return { message: 'Product updated successfully', updatedProduct: updated };
     }
 
     @Delete(
@@ -53,8 +53,8 @@ export class ProductController {
     )
     @Roles(USER_ROLE.STAFF)
     @UseGuards(AuthGuard(), RolesGuard)
-    async deleteProduct(@Param('id') id: string): Promise<{ message: string }> {
-        await this.productService.deleteById(id);
-        return { message: `Product has been deleted successfully` };
+    async deleteProduct(@Param('id') id: string): Promise<{ message: string , deletedProduct: Product}> {
+        const product = await this.productService.deleteById(id);
+        return { message: `Product ${product.name} with serial number ${product.serialNumber} has been deleted successfully`, deletedProduct: product };
     }
 }
