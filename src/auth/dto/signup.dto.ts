@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validator';
-import { USER_ROLE } from '../../utils/user.enum';
+import { USER_ROLE } from '../utils/user.enum';
 
 export class SignUpDto {
   @IsNotEmpty()

@@ -1,11 +1,11 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User } from 'src/schemas/user.schema';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { SignUpDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
+import { User } from './schemas/user.schema';
 
 @Injectable()
 export class AuthService {
@@ -32,12 +32,12 @@ export class AuthService {
     async login(loginDto: LoginDto): Promise<{ token: string, expiresIn: number }> {
         const { username, password } = loginDto;
 
-        const user = await this.userModel.findOne({ username });
+        const user = await this.userModel.findOne({ username : username }).select('+password');
 
         if (!user) {
             throw new UnauthorizedException('Invalid username');
         }
-
+        
         const isPasswordMatch = await bcrypt.compare(password, user.password);
 
         if (!isPasswordMatch) {
@@ -48,5 +48,11 @@ export class AuthService {
         const expiresIn = this.jwtService.decode(token)['exp'];
 
         return { token, expiresIn };
+    }
+
+    async info(token: string): Promise<{ info: User }> {
+        const decoded = this.jwtService.decode(token);
+        const user = await this.userModel.findById(decoded.id);
+        return {info: user};
     }
 }

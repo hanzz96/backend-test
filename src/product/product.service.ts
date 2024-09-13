@@ -1,26 +1,37 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Product } from 'src/schemas/product.schema';
-import { User } from 'src/schemas/user.schema';
+import { Model, Types } from 'mongoose';
+import { User } from 'src/auth/schemas/user.schema';
+import MongooseDelete = require("mongoose-delete");
+import { Product, ProductDocument } from './schemas/product.schema';
+import { WarrantyClaim, WarrantyClaimDocument } from 'src/warranty/schemas/warrantyclaim.schema';
+import { WarrantyclaimService } from 'src/warranty/warrantyclaim.service';
 
 @Injectable()
 export class ProductService {
     constructor(
         @InjectModel(Product.name)
-        private productModel: Model<Product>
+        private productModel: MongooseDelete.SoftDeleteModel<ProductDocument>,
+        @InjectModel(WarrantyClaim.name) 
+        private warrantyClaimModel: Model<WarrantyClaimDocument>,
     ) { }
 
     async create(product: Product, user: User): Promise<Product> {
-        const {serialNumber} = product;
+        const { name, serialNumber } = product;
 
-        const productExist = await this.productModel.findOne({serialNumber});
-        
-        if(productExist){
-            throw new ConflictException(`Serial number already exist, on product ${productExist.name}`);
+        const productExist = await this.productModel.findOneWithDeleted({ name: name, serialNumber: serialNumber });
+
+        if (productExist) {
+            let message = `Product already exist`;
+
+            if (productExist.deletedAt) {
+                message += ` and it was already deleted at ${productExist.deletedAt} , Please restore it by contact admin`;
+            }
+
+            throw new ConflictException(message);
         }
 
-        const data = Object.assign(product, {createdBy: user.username});
+        const data = Object.assign(product, { createdBy: user._id });
 
         const newProduct = await this.productModel.create(data);
         return newProduct;
@@ -33,7 +44,7 @@ export class ProductService {
 
     async findOne(id: string): Promise<Product> {
         const product = await this.productModel.findById(id);
-        
+
         if (!product) {
             throw new NotFoundException('Product not found');
         }
@@ -42,7 +53,7 @@ export class ProductService {
     }
 
     async updateById(id: string, product: Product): Promise<Product> {
-        
+
         return this.productModel.findByIdAndUpdate(id, product, {
             new: true,
             runValidators: true
@@ -50,6 +61,17 @@ export class ProductService {
     }
 
     async deleteById(id: string): Promise<Product> {
-        return this.productModel.findByIdAndDelete(id)
+        /**
+         * Check if there are warranty claims exists, assuming if there are warranty transaction, product SHOULDN NOT be deleted
+         */
+        const hasClaims = await this.warrantyClaimModel.exists({
+            productId: new Types.ObjectId(id),
+        });
+        
+        if (hasClaims) {
+            throw new ConflictException('Cannot delete product because there are pending or approved warranty claims.');
+        }
+        return this.productModel.deleteById(id)
+        // return this.productModel.findByIdAndDelete(id);
     }
 }

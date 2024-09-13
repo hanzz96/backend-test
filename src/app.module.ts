@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProductModule } from './product/product.module';
+import { WarrantyclaimModule } from './warranty/warrantyclaim.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { ProductModule } from './product/product.module';
     MongooseModule.forRoot(
       `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@backend-test.9xllm.mongodb.net/${process.env.MONGO_DB}?retryWrites=true&w=majority&appName=backend-test`),
     AuthModule,
-    ProductModule
+    ProductModule,
+    WarrantyclaimModule
   ],
   controllers: [AppController],
   providers: [AppService],
