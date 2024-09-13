@@ -2,7 +2,6 @@ import { BadRequestException, ConflictException, Inject, Injectable, NotFoundExc
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User } from 'src/auth/schemas/user.schema';
-import MongooseDelete = require("mongoose-delete");
 import { Product, ProductDocument } from './schemas/product.schema';
 import { WarrantyClaim, WarrantyClaimDocument } from 'src/warranty/schemas/warrantyclaim.schema';
 import { CacheLockException } from 'src/_exception/cache_lock.exception';
