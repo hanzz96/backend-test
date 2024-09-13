@@ -14,7 +14,8 @@ import { WarrantyclaimModule } from './warranty/warrantyclaim.module';
       isGlobal: true,
     }),
     MongooseModule.forRoot(
-      `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@backend-test.9xllm.mongodb.net/${process.env.MONGO_DB}?retryWrites=true&w=majority&appName=backend-test`),
+      process.env.MONGO_URI
+    ),
     AuthModule,
     ProductModule,
     WarrantyclaimModule
