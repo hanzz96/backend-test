@@ -5,15 +5,18 @@ import { User } from 'src/auth/schemas/user.schema';
 import MongooseDelete = require("mongoose-delete");
 import { Product, ProductDocument } from './schemas/product.schema';
 import { WarrantyClaim, WarrantyClaimDocument } from 'src/warranty/schemas/warrantyclaim.schema';
-import { WarrantyclaimService } from 'src/warranty/warrantyclaim.service';
+import { CacheLockException } from 'src/_exception/cache_lock.exception';
+import { CacheService } from 'src/_common/cache.service';
+import { CACHE_KEYS } from 'src/_util/util.const';
 
 @Injectable()
 export class ProductService {
     constructor(
         @InjectModel(Product.name)
         private productModel: MongooseDelete.SoftDeleteModel<ProductDocument>,
-        @InjectModel(WarrantyClaim.name) 
+        @InjectModel(WarrantyClaim.name)
         private warrantyClaimModel: Model<WarrantyClaimDocument>,
+        private readonly cacheManager: CacheService
     ) { }
 
     async create(product: Product, user: User): Promise<Product> {
@@ -64,14 +67,27 @@ export class ProductService {
         /**
          * Check if there are warranty claims exists, assuming if there are warranty transaction, product SHOULDN NOT be deleted
          */
-        const hasClaims = await this.warrantyClaimModel.exists({
-            productId: new Types.ObjectId(id),
-        });
-        
-        if (hasClaims) {
-            throw new ConflictException('Cannot delete product because there are pending or approved warranty claims.');
+
+        try {
+
+            this.cacheManager.unlockCache(`${CACHE_KEYS.PRODUCT}${id}`);
+            const hasClaims = await this.warrantyClaimModel.exists({
+                productId: new Types.ObjectId(id),
+            });
+
+            if (hasClaims) {
+                throw new ConflictException('Cannot delete product because there are pending or approved warranty claims.');
+            }
+
+            this.cacheManager.unlockCache(`${CACHE_KEYS.PRODUCT}${id}`);
+            return this.productModel.deleteById(id)
+        } catch (error) {
+            if (error! instanceof CacheLockException) {
+                this.cacheManager.unlockCache(`${CACHE_KEYS.PRODUCT}${id}`);
+            }
+            throw error;
         }
-        return this.productModel.deleteById(id)
+
         // return this.productModel.findByIdAndDelete(id);
     }
 }

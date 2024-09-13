@@ -15,17 +15,17 @@ export class ProductController {
     @Get()
     @Roles(USER_ROLE.STAFF, USER_ROLE.CUSTOMER)
     @UseGuards(AuthGuard(), RolesGuard)
-    async findAll(): Promise<Product[]> {
-        return this.productService.findAll();
+    async findAll(): Promise<{ products: Product[] }> {
+        return {products  : await this.productService.findAll() };
     }
 
     @Post()
     @UseGuards(AuthGuard())
     @Roles(USER_ROLE.STAFF)
     @UseGuards(AuthGuard(), RolesGuard)
-    async create(@Body() product: CreateProductDto, @Req() req): Promise<Product> {
+    async create(@Body() product: CreateProductDto, @Req() req): Promise<{ message: string , product: Product}> {
         const res = await this.productService.create(product, req.user);
-        return res;
+        return { message: 'Product created successfully', product: res };
     }
 
     @Get(
@@ -33,9 +33,9 @@ export class ProductController {
     )
     @Roles(USER_ROLE.STAFF, USER_ROLE.CUSTOMER)
     @UseGuards(AuthGuard(), RolesGuard)
-    async getProduct(@Param('id') id: string): Promise<Product> {
+    async getProduct(@Param('id') id: string): Promise<{ product: Product }> {
         const product = await this.productService.findOne(id);
-        return product;
+        return { product: product };
     }
 
     @Put(
@@ -43,9 +43,9 @@ export class ProductController {
     )
     @Roles(USER_ROLE.STAFF)
     @UseGuards(AuthGuard(), RolesGuard)
-    async updateProduct(@Param('id') id: string, @Body() product: UpdateProductDto): Promise<Product> {
+    async updateProduct(@Param('id') id: string, @Body() product: UpdateProductDto): Promise<{ message: string, updated_product: Product }> {
         const updated = await this.productService.updateById(id, product);
-        return updated;
+        return { message: 'Product updated successfully', updated_product: updated };
     }
 
     @Delete(
@@ -53,8 +53,8 @@ export class ProductController {
     )
     @Roles(USER_ROLE.STAFF)
     @UseGuards(AuthGuard(), RolesGuard)
-    async deleteProduct(@Param('id') id: string): Promise<Product> {
+    async deleteProduct(@Param('id') id: string): Promise<{ message: string }> {
         const product = await this.productService.deleteById(id);
-        return product;
+        return { message: `Product ${product.name} with serial ${product.serialNumber} deleted successfully` };
     }
 }
