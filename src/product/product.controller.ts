@@ -54,7 +54,7 @@ export class ProductController {
     @Roles(USER_ROLE.STAFF)
     @UseGuards(AuthGuard(), RolesGuard)
     async deleteProduct(@Param('id') id: string): Promise<{ message: string }> {
-        const product = await this.productService.deleteById(id);
-        return { message: `Product ${product.name} with serial ${product.serialNumber} deleted successfully` };
+        await this.productService.deleteById(id);
+        return { message: `Product has been deleted successfully` };
     }
 }

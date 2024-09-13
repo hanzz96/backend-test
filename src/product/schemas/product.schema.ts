@@ -1,7 +1,6 @@
 import { Schema, Prop, SchemaFactory } from "@nestjs/mongoose";
 import { Types, Document } from "mongoose";
 import { User } from "src/auth/schemas/user.schema";
-import * as MongooseDelete from 'mongoose-delete';
 import { Expose } from "class-transformer";
 import { USER_ROLE } from "src/auth/utils/user.enum";
 
@@ -23,5 +22,5 @@ export class Product {
   createdBy: User;
 }
 
-export const ProductSchema = SchemaFactory.createForClass(Product).plugin(MongooseDelete, { overrideMethods: "all", deletedAt: true });
+export const ProductSchema = SchemaFactory.createForClass(Product);
 ProductSchema.index({ name: 1, serialNumber: 1 }, { unique: true });

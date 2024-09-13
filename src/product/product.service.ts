@@ -13,7 +13,7 @@ import { CACHE_KEYS } from 'src/_util/util.const';
 export class ProductService {
     constructor(
         @InjectModel(Product.name)
-        private productModel: MongooseDelete.SoftDeleteModel<ProductDocument>,
+        private productModel: Model<ProductDocument>,
         @InjectModel(WarrantyClaim.name)
         private warrantyClaimModel: Model<WarrantyClaimDocument>,
         private readonly cacheManager: CacheService
@@ -22,15 +22,10 @@ export class ProductService {
     async create(product: Product, user: User): Promise<Product> {
         const { name, serialNumber } = product;
 
-        const productExist = await this.productModel.findOneWithDeleted({ name: name, serialNumber: serialNumber });
+        const productExist = await this.productModel.findOne({ name: name, serialNumber: serialNumber });
 
         if (productExist) {
             let message = `Product already exist`;
-
-            if (productExist.deletedAt) {
-                message += ` and it was already deleted at ${productExist.deletedAt} , Please restore it by contact admin`;
-            }
-
             throw new ConflictException(message);
         }
 
@@ -64,23 +59,19 @@ export class ProductService {
     }
 
     async deleteById(id: string): Promise<Product> {
-        /**
-         * Check if there are warranty claims exists, assuming if there are warranty transaction, product SHOULDN NOT be deleted
-         */
-
         try {
 
             this.cacheManager.unlockCache(`${CACHE_KEYS.PRODUCT}${id}`);
-            const hasClaims = await this.warrantyClaimModel.exists({
+            const hasClaims = await this.warrantyClaimModel.findOne({
                 productId: new Types.ObjectId(id),
             });
-
+            
             if (hasClaims) {
-                throw new ConflictException('Cannot delete product because there are pending or approved warranty claims.');
+                throw new ConflictException('Cannot delete product because there are existing warranty claims.');
             }
 
             this.cacheManager.unlockCache(`${CACHE_KEYS.PRODUCT}${id}`);
-            return this.productModel.deleteById(id)
+            return this.productModel.findByIdAndDelete(id)
         } catch (error) {
             if (error! instanceof CacheLockException) {
                 this.cacheManager.unlockCache(`${CACHE_KEYS.PRODUCT}${id}`);
