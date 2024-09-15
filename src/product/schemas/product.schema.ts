@@ -1,7 +1,7 @@
 import { Schema, Prop, SchemaFactory } from "@nestjs/mongoose";
 import { Types, Document } from "mongoose";
 import { User } from "src/auth/schemas/user.schema";
-import { Expose } from "class-transformer";
+import { Exclude, Expose } from "class-transformer";
 import { USER_ROLE } from "src/auth/utils/user.enum";
 
 export type ProductDocument = Product & Document;
@@ -12,7 +12,6 @@ export class Product {
   name: string;
 
   @Prop({ required: true })
-  @Expose({ groups: [USER_ROLE.STAFF] })
   serialNumber: string;
 
   @Prop({ required: true })
@@ -20,6 +19,7 @@ export class Product {
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   createdBy: User;
+  
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

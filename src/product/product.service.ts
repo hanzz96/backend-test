@@ -7,6 +7,7 @@ import { WarrantyClaim, WarrantyClaimDocument } from 'src/warranty/schemas/warra
 import { CacheLockException } from 'src/_exception/cache_lock.exception';
 import { CacheService } from 'src/_common/cache.service';
 import { CACHE_KEYS } from 'src/_util/util.const';
+import { USER_ROLE } from 'src/auth/utils/user.enum';
 
 @Injectable()
 export class ProductService {
@@ -34,19 +35,28 @@ export class ProductService {
         return newProduct;
     }
 
-    async findAll(): Promise<Product[]> {
-        // console.log('masuk');
-        return this.productModel.find();
+    async findAll(user: User): Promise<Product[]> {
+        if(user.role === USER_ROLE.STAFF){
+            return this.productModel.find();
+        }
+        else{
+            return this.productModel.find({},'-serialNumber');
+        }
     }
 
-    async findOne(id: string): Promise<Product> {
+    async findOne(id: string, user: User): Promise<Product> {
+
         const product = await this.productModel.findById(id);
 
         if (!product) {
             throw new NotFoundException('Product not found');
         }
 
+        if(user.role === USER_ROLE.CUSTOMER){
+            return await this.productModel.findById(id, '-serialNumber');
+        }
         return product;
+
     }
 
     async updateById(id: string, product: Product): Promise<Product> {
@@ -64,7 +74,7 @@ export class ProductService {
             const hasClaims = await this.warrantyClaimModel.findOne({
                 productId: new Types.ObjectId(id),
             });
-            
+
             if (hasClaims) {
                 throw new ConflictException('Cannot delete product because there are existing warranty claims.');
             }

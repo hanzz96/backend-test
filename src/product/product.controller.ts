@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, ClassSerializerInterceptor, Controller, Delete, Get, Param, Post, Put, Req, SerializeOptions, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -7,6 +7,7 @@ import { Roles } from 'src/auth/decorators/role.decorator';
 import { USER_ROLE } from 'src/auth/utils/user.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Product } from './schemas/product.schema';
+import { User } from 'src/auth/schemas/user.schema';
 
 @Controller('product')
 export class ProductController {
@@ -15,8 +16,8 @@ export class ProductController {
     @Get()
     @Roles(USER_ROLE.STAFF, USER_ROLE.CUSTOMER)
     @UseGuards(AuthGuard(), RolesGuard)
-    async findAll(): Promise<{ products: Product[] }> {
-        return {products  : await this.productService.findAll() };
+    async findAll(@Req() req): Promise<{ products: Product[] }> {
+        return {products  : await this.productService.findAll(req.user) };
     }
 
     @Post()
@@ -33,8 +34,8 @@ export class ProductController {
     )
     @Roles(USER_ROLE.STAFF, USER_ROLE.CUSTOMER)
     @UseGuards(AuthGuard(), RolesGuard)
-    async getProduct(@Param('id') id: string): Promise<{ product: Product }> {
-        const product = await this.productService.findOne(id);
+    async getProduct(@Param('id') id: string, @Req() req): Promise<{ product: Product }> {
+        const product = await this.productService.findOne(id, req.user);
         return { product: product };
     }
 

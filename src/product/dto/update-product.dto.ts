@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsEmpty, IsNotEmpty, IsString} from 'class-validator';
+import { IsEmpty, IsInt, IsNotEmpty, IsString} from 'class-validator';
 import { User } from 'src/auth/schemas/user.schema';
 /**
  * expected payload from frontend
@@ -16,7 +16,8 @@ export class UpdateProductDto {
   readonly serialNumber: string;
 
   @IsNotEmpty()
-  @IsString()
+  @IsInt()
+  @IsEmpty(0);
   readonly warrantyPeriodDay: number;
 
   @IsEmpty({message: 'cannot pass userId'})
