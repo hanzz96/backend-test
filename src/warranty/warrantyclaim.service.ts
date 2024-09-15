@@ -10,13 +10,15 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CacheService } from 'src/_common/cache.service';
 import { CacheLockException } from 'src/_exception/cache_lock.exception';
 import { CACHE_KEYS } from 'src/_util/util.const';
+import { Product, ProductDocument } from 'src/product/schemas/product.schema';
 
 @Injectable()
 export class WarrantyclaimService {
     constructor(
         @InjectModel(WarrantyClaim.name)
         private warrantyClaimModel: Model<WarrantyClaimDocument>,
-        private productService: ProductService,
+        @InjectModel(Product.name)
+        private productModel: Model<ProductDocument>,
         private readonly cacheManager: CacheService
     ) { }
 
@@ -52,7 +54,11 @@ export class WarrantyclaimService {
         const { productId, serialNumber } = warrantyClaim;
         try {
             this.cacheManager.silentLockCache(`${CACHE_KEYS.PRODUCT}${productId}`, user.username, 5000, `Data is being processed now by ${user.username}, please try refresh page`);
-            await this.productService.findOne(productId.toString());
+            const product = await this.productModel.findOne({ _id: new Types.ObjectId(productId.toString()) });
+
+            if(!product){
+                throw new NotFoundException('Product not found');
+            }
 
             const getClaim = await this.warrantyClaimModel.findOne({ productId: new Types.ObjectId(productId.toString()) });
 
