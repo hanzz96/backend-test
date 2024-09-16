@@ -8,7 +8,7 @@ export class ApproveWarrantyClaimDto {
   
   @ApiProperty({
     example: 'approved',
-    description: 'Status of the warranty claim'
+    description: 'Status of the warranty claim, approved or rejected'
   })
   @IsNotEmpty()
   @IsEnum(WARRANTY_CLAIM_STATUS, { message: 'Please enter a valid approval status' })
