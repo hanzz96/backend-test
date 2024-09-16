@@ -19,7 +19,10 @@ export class WarrantyclaimController {
         status: 200, description: 'Get all warranty claims, if user is staff, get all claims, if user is customer, get claims by user. if customer cannot see serial number original from product',
         schema: {
             properties: {
-                claims: { $ref: getSchemaPath(WarrantyClaim) }
+                claims: {
+                    type: 'array',
+                    items: { $ref: getSchemaPath(WarrantyClaim) }
+                }
             }
         }
     })
