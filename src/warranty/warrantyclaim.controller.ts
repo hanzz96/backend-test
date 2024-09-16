@@ -20,8 +20,7 @@ export class WarrantyclaimController {
         schema: {
             properties: {
                 claims: {
-                    type: 'array',
-                    items: { $ref: getSchemaPath(WarrantyClaim) }
+                    $ref: getSchemaPath(WarrantyClaim) 
                 }
             }
         }
