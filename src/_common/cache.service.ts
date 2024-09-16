@@ -16,7 +16,7 @@ export class CacheService {
     await this.cacheManager.set(key, value, ttl );
   }
 
-  async silentLockCache(key: string, value: any, ttl: number = 3000, failedMessage: string): Promise<void> {
+  async silentLockCache(key: string, value: any, ttl: number = 3000): Promise<void> {
     await this.cacheManager.set(key, value, ttl );
   }
   // Method to unlock cache

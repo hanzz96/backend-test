@@ -11,6 +11,7 @@ import { CacheService } from 'src/_common/cache.service';
 import { CacheLockException } from 'src/_exception/cache_lock.exception';
 import { CACHE_KEYS } from 'src/_util/util.const';
 import { Product, ProductDocument } from 'src/product/schemas/product.schema';
+import { USER_ROLE } from 'src/auth/utils/user.enum';
 
 @Injectable()
 export class WarrantyclaimService {
@@ -26,7 +27,7 @@ export class WarrantyclaimService {
 
         return this.warrantyClaimModel.find().populate({
             path: 'productId',
-            select: 'name warrantyPeriodDay createdAt serialNumber'
+            select: '_id name warrantyPeriodDay createdAt serialNumber'
         })
             .populate({
                 path: 'customerId',
@@ -36,11 +37,25 @@ export class WarrantyclaimService {
     }
 
     async findByUserCustomer(userCustomerId: string): Promise<WarrantyClaim[]> {
-        return this.warrantyClaimModel.find({ customerId: userCustomerId });
+        return this.warrantyClaimModel.find({ customerId: userCustomerId }).populate({
+            path: 'productId',
+            select: '_id name warrantyPeriodDay createdAt'
+        })
+            .populate({
+                path: 'customerId',
+                select: 'username role'
+            }).exec();
     }
 
-    async findOne(id: string): Promise<WarrantyClaim> {
-        const warrancyClaim = await this.warrantyClaimModel.findById(id);
+    async findOne(id: string, user: User): Promise<WarrantyClaim> {
+
+        let warrancyClaim = null;
+        if(user.role == USER_ROLE.CUSTOMER){
+            warrancyClaim = await this.warrantyClaimModel.findOne({ _id: id, customerId: user._id });
+        }
+        else{
+            warrancyClaim = await this.warrantyClaimModel.findById(id);
+        }
 
         if (!warrancyClaim) {
             throw new NotFoundException('Warranty Claim not found');
@@ -53,10 +68,10 @@ export class WarrantyclaimService {
 
         const { productId, serialNumber } = warrantyClaim;
         try {
-            this.cacheManager.silentLockCache(`${CACHE_KEYS.PRODUCT}${productId}`, user.username, 5000, `Data is being processed now by ${user.username}, please try refresh page`);
+            this.cacheManager.silentLockCache(`${CACHE_KEYS.PRODUCT}${productId}`, user.username, 5000);
             const product = await this.productModel.findOne({ _id: new Types.ObjectId(productId.toString()) });
 
-            if(!product){
+            if (!product) {
                 throw new NotFoundException('Product not found');
             }
 

@@ -36,11 +36,11 @@ export class ProductService {
     }
 
     async findAll(user: User): Promise<Product[]> {
-        if(user.role === USER_ROLE.STAFF){
+        if (user.role === USER_ROLE.STAFF) {
             return this.productModel.find();
         }
-        else{
-            return this.productModel.find({},'-serialNumber');
+        else {
+            return this.productModel.find({}, '-serialNumber');
         }
     }
 
@@ -52,7 +52,7 @@ export class ProductService {
             throw new NotFoundException('Product not found');
         }
 
-        if(user.role === USER_ROLE.CUSTOMER){
+        if (user.role === USER_ROLE.CUSTOMER) {
             return await this.productModel.findById(id, '-serialNumber');
         }
         return product;
@@ -70,7 +70,7 @@ export class ProductService {
     async deleteById(id: string): Promise<Product> {
         try {
 
-            this.cacheManager.unlockCache(`${CACHE_KEYS.PRODUCT}${id}`);
+            this.cacheManager.lockCache(`${CACHE_KEYS.PRODUCT}${id}`, 1, 5000, 'Data is being used now in claim processing');
             const hasClaims = await this.warrantyClaimModel.findOne({
                 productId: new Types.ObjectId(id),
             });
